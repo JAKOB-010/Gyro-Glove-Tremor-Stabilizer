@@ -158,3 +158,81 @@ Below is the detailed step-by-step technical execution flow of the system:
 | **4.0 Hz – 7.9 Hz** | Mild / Moderate Pathological Tremor | `ENABLED` (Stabilizing) | **5,000 ms (5s)** | **7,000 ms (7s)** |
 | **8.0 Hz – 12.0 Hz** | Severe Pathological Tremor | `ENABLED` (Max Suppression) | **7,000 ms (7s)** | **14,000 ms (14s)** |
 | **> 12.0 Hz** | High Frequency Mechanical Noise | `DISABLED` (Idle) | 0 ms | 0 ms |
+
+
+## ☁️ IoT Telemetry Integration (ThingSpeak Dashboard)
+
+The system records data remotely via an active cloud interface, updating the following metrics sequentially over an asynchronous 15-second tracking loop:
+* **Field 1 (`tremor_hz`):** Captures isolated peak frequency values (clamped safely between 0.0 Hz and 12.0 Hz).
+* **Field 2 (`motor_rpm`):** Reflects live target flywheel speeds calculated by the core controller mapping algorithms.
+* **Field 3 (`run_duration`):** Transmits active mechanical suppression windows recorded in seconds.
+
+<img width="800" alt="ThingSpeak Cloud Dashboard" src="https://github.com/user-attachments/assets/ddd48453-bba1-4927-be5e-c93bad296744" />
+
+### 📊 Dashboard Optimization Suggestion
+To optimize visual clarity for sudden tremor spikes and remove confusing diagonal line rendering caused by long offline periods between sessions:
+1. Navigate to the **Private View / Public View** configuration window inside your ThingSpeak account.
+2. Select the configuration settings icon on each field chart.
+3. Update **Results** to view only the last `60` entries.
+4. Modify chart visualization **Type** from standard `line` layout to a discrete `column` (bar graph) structure.
+
+---
+
+## 📸 Physical Prototype & Live Demonstration
+
+The final mechanical assembly successfully integrates the computational electronics, sensor arrays, and the high-RPM mechanical drivetrain into a functional wearable prototype. 
+
+<p align="center">
+  <img width="45%" alt="Gyro Glove Prototype Assembly" src="https://github.com/user-attachments/assets/1438f6c2-0a0a-4d9e-9262-d022fb135740" />
+  &nbsp; &nbsp; &nbsp;
+  <img width="45%" alt="Gyro Glove Live Testing" src="https://github.com/user-attachments/assets/9f7a1a0c-eb58-481e-968a-53a9b4408376" />
+</p>
+
+### 🛠️ Structural Assembly Details
+* **Dorsal Actuation:** The BLDC motor and high-mass flywheel are mounted securely to the back of the hand (dorsal side). This placement maximizes the gyroscopic counter-torque directly against the wrist joint without obstructing the natural gripping mechanics of the fingers.
+* **Forearm Electronics Housing:** To maintain the balance of the hand, the ESP32 microcontroller, 30A ESC, and high-discharge LiPo battery are strapped dynamically to the forearm. This prevents the heavy battery mass from interfering with the ADXL335 sensor's raw tremor measurements.
+
+## 🚀 How to Setup, Configure, and Run
+
+Follow these systematic instructions to configure the software stack, flash the firmware onto the ESP32 microcontroller, and initialize the hardware loop safely.
+
+### 📋 Prerequisites & Software Installation
+1. Download and install the latest desktop **Arduino IDE** or access the browser-based **Arduino Web Editor**.
+2. If utilizing the online editor, ensure the **Arduino Create Agent** plugin is actively running in your background taskbar.
+3. Open the Arduino IDE, navigate to **File ➔ Preferences**, and paste the following URL into the *Additional Boards Manager URLs* field to enable Espressif support:
+   `https://dl.espressif.com/dl/package_esp32_index.json`
+4. Navigate to **Tools ➔ Board ➔ Boards Manager**, search for `esp32` by **Espressif Systems**, and click install.
+5. Set your target development hardware configuration: **Board ➔ DOIT ESP32 DEVKIT V1**.
+
+### 🔑 Network & Cloud Parameter Adjustments
+Before compiling the codebase, open your main firmware file (`Gyro_Glove_Final_Cloud.ino`) and locate the network authentication credentials at the top of the file. Update them with your local access parameters:
+
+```cpp
+// Network & Telemetry Cloud Configuration
+const char* ssid     = "YOUR_WIFI_HOTSPOT_NAME";  // Must be a 2.4GHz broadcast band
+const char* password = "YOUR_HOTSPOT_PASSWORD";   // Network password
+String apiKey        = "YOUR_THINGSPEAK_WRITE_API_KEY"; // ThingSpeak Channel Write Key
+```
+
+> **📶 Crucial Network Warning**
+> The ESP32 integrated 802.11 b/g/n Wi-Fi radio module is strictly incompatible with 5GHz wireless bands. If initializing the system via a smartphone mobile hotspot, you must enter your sharing configurations and toggle ON the "Maximize Compatibility" or "Extend 2.4GHz Band" option. Without this, the ESP32 will stay trapped in a boot-loop trying to find the router.
+
+### ⚡ Physical Upload and Verification Loop
+Connect the ESP32 development board to your computer using a data-capable Micro-USB to USB-A cable.
+
+1. Select your device's active path: **Tools ➔ Port** (e.g., `COM3` or `/dev/cu.usbserial`).
+2. Click the Upload button (Right-pointing arrow icon in the top toolbar).
+3. Once the terminal status changes to "Done Uploading", open the Serial Monitor (**Tools ➔ Serial Monitor** or `Ctrl+Shift+M`).
+4. Change the connection transmission speed dropdown menu in the bottom-right corner to **9600 Baud**.
+5. Observe the Initialization Sequence: The ESP32 will attempt connection to your Wi-Fi hotspot, flashing a progress bar.
+6. Once connected, the console will print a confirmation message alongside its assigned IP address.
+7. ESC Arming Protocol: The system will immediately output a 50Hz safety signal (`STOP_DUTY`) to the ESC. You will hear a series of initialization beeps from the motor signaling that the drivetrain has armed safely and is standing by in IDLE state.
+
+## 🎓 Academic Credit & Development Team
+
+This cyber-physical wearable system was designed, engineered, and physically prototyped.
+
+### 🛠️ Project Developers:
+* **Jishnu Sreekumar**
+* **Eldho Sabu**
+* **Melvin P Issac**
